@@ -1,6 +1,7 @@
 const { response } = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/Users');
+const { generateJWT } = require('../helpers/jwt');
 
 const createUser = async (req, res = response) => {
     
@@ -12,8 +13,7 @@ const createUser = async (req, res = response) => {
         if( user ) {
             return res.status(400).json({
                 ok: false,
-                uid: user.id,
-                name: user.name
+                msg: 'The user is already registered'
             });
         }
 
@@ -24,10 +24,13 @@ const createUser = async (req, res = response) => {
 
         await user.save();
 
+        const token = await generateJWT( user.id, user.name);
+
         res.status(201).json({
             ok: true,
-            msg: 'registro',
-            ...req.body
+            uid: user.id,
+            name: user.name,
+            token
         })
     } catch (error) {
         res.status(500).json({
@@ -37,15 +40,41 @@ const createUser = async (req, res = response) => {
     }
 }
 
-const loginUser = (req, res = response) => {
+const loginUser = async (req, res = response) => {
     const { email, password } = req.body;
 
-    res.json({
-        ok: true,
-        msg: 'login',
-        email,
-        password
-    })
+    try {
+
+        const user = await User.findOne({ email });
+        if( !user ) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'The user does not exist'
+            });
+        }
+
+        const validPassword = bcrypt.compareSync( password, user.password);
+        if( !validPassword ) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Incorrect data'
+            });
+        }
+
+        const token = await generateJWT( user.id, user.name);
+
+        res.status(201).json({
+            ok: true,
+            uid: user.id,
+            name: user.name,
+            token
+        })
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            msg: error
+        })
+    }
 }
 
 const revalidateToken = (req, res = response) => {
