@@ -7,10 +7,9 @@ const generateJWT = (uid, name) => {
         const payload = { uid, name };
 
         const privateKeyPath = path.join(__dirname, 'keys', process.env.PRIVATE_KEY);
-
         const privateKey = fs.readFileSync(privateKeyPath);
 
-        jwt.sign(payload, privateKey, { expiresIn: '2h' }, (err, token) => {
+        jwt.sign(payload, privateKey, { expiresIn: '2h', algorithm: 'RS256' }, (err, token) => {
             if(err) {
                 console.log(err);
                 reject('Could not generate token');
