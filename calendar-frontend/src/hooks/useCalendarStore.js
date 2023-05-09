@@ -1,8 +1,9 @@
 import { useDispatch, useSelector } from "react-redux"
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import { onAddNewEvent, onDeleteEvent, onLoadEvents, onSetActiveEvent, onUpdateEvent } from "../store";
 import { calendarApi } from "../api";
 import { convertEventsToDateEvents } from "../helpers";
-
 export const useCalendarStore = () => {
 
     const dispatch = useDispatch();
@@ -15,11 +16,17 @@ export const useCalendarStore = () => {
     }
 
     const startSavingEvent = async( calendarEvent ) => {
-        if( calendarEvent._id) {
-            dispatch( onUpdateEvent({ ...calendarEvent }));
-        } else {
+        try {
+            if( calendarEvent.id) {
+                await calendarApi.put(`/events/${calendarEvent.id}`, calendarEvent);
+                dispatch( onUpdateEvent({ ...calendarEvent, user }));
+                return;
+            }
             const { data } = await calendarApi.post('/events', calendarEvent);
             dispatch( onAddNewEvent({ ...calendarEvent, id: data.event.id, user }));
+        } catch (error) {
+            console.log(error)
+            Swal.fire('Error to try update', error.response.data.msg, 'error')
         }
     }
 
