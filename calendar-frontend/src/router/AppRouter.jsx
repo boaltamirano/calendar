@@ -6,7 +6,6 @@ import { useEffect } from "react";
 
 export const AppRouter = () => {
 
-    // const authStatus = 'not-authenticated';
     const { status, checkAuthToken } = useAuthStore();
 
     useEffect(() => {
